@@ -11,30 +11,42 @@ fn main() {
         max_iteration: 256,
     };
 
-    let mut res = 1;
-    while res < 32 {
-        let file_name = format!("julia_{}k.png", res);
-        println!("Generating {}", file_name);
-        println!(" - allocate buffer");
-        let mut buffer = RGBABuffer::<u8>::new(res * 1024, res * 1024);
-        println!(" - generate fractal");
-        julia.generate(&mut buffer);
-        println!(" - write image");
-        write_png(&file_name, buffer);
-        res += 1;
+    generate_pngs(&julia, 1, 32);
+    generate_openexrs(&julia, 1, 64);
+}
+
+fn generate_pngs(julia: &Julia, from: u32, to: u32) {
+    for res in from..to {
+        generate_png(julia, res);
     }
-    res = 1;
-    while res <= 63 {
-        let file_name = format!("julia_{}k.exr", res);
-        println!("Generating {}", file_name);
-        println!(" - allocate buffer");
-        let mut buffer = RGBABuffer::<Rgba>::new(res * 1024, res * 1024);
-        println!(" - generate fractal");
-        julia.generate(&mut buffer);
-        println!(" - write image");
-        write_openexr(&file_name, buffer);
-        res += 1;
+}
+
+fn generate_png(julia: &Julia, resolution: u32) {
+    let file_name = format!("julia_{}k.png", resolution);
+    println!("Generating {}", file_name);
+    println!(" - allocate buffer");
+    let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);
+    println!(" - generate fractal");
+    julia.generate(&mut buffer);
+    println!(" - write image");
+    write_png(&file_name, buffer);
+}
+
+fn generate_openexrs(julia: &Julia, from: u32, to: u32) {
+    for res in from..to {
+        generate_openexr(julia, res);
     }
+}
+
+fn generate_openexr(julia: &Julia, resolution: u32) {
+    let file_name = format!("julia_{}k.exr", resolution);
+    println!("Generating {}", file_name);
+    println!(" - allocate buffer");
+    let mut buffer = RGBABuffer::<Rgba>::new(resolution * 1024, resolution * 1024);
+    println!(" - generate fractal");
+    julia.generate(&mut buffer);
+    println!(" - write image");
+    write_openexr(&file_name, buffer);
 }
 
 struct Julia {
