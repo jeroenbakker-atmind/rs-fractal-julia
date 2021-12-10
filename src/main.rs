@@ -3,7 +3,88 @@ extern crate png;
 use half::f16;
 use openexr::prelude::*;
 
-#[derive(Default)]
+fn main() {
+    let julia = Julia {
+        r: 2.0,
+        cx: -0.8,
+        cy: 0.156,
+        max_iteration: 256,
+    };
+
+    let mut res = 1;
+    while res < 32 {
+        let file_name = format!("julia_{}k.png", res);
+        println!("Generating {}", file_name);
+        println!(" - allocate buffer");
+        let mut buffer = RGBABuffer::<u8>::new(res * 1024, res * 1024);
+        println!(" - generate fractal");
+        julia.generate(&mut buffer);
+        println!(" - write image");
+        write_png(&file_name, buffer);
+        res += 1;
+    }
+    res = 1;
+    while res <= 63 {
+        let file_name = format!("julia_{}k.exr", res);
+        println!("Generating {}", file_name);
+        println!(" - allocate buffer");
+        let mut buffer = RGBABuffer::<Rgba>::new(res * 1024, res * 1024);
+        println!(" - generate fractal");
+        julia.generate(&mut buffer);
+        println!(" - write image");
+        write_openexr(&file_name, buffer);
+        res += 1;
+    }
+}
+
+struct Julia {
+    pub r: f64,
+    pub cx: f64,
+    pub cy: f64,
+    pub max_iteration: usize,
+}
+
+impl Julia {
+    pub fn generate(&self, buffer: &mut dyn BufferTrait) {
+        let r2 = self.r * self.r;
+
+        let width = buffer.get_width();
+        let height = buffer.get_height();
+
+        let mut offset = 0;
+        for y in 0..height {
+            for x in 0..width {
+                let zx = x as f64 / width as f64 - 0.5;
+                let zy = y as f64 / height as f64 - 0.5;
+
+                let iteration = self.coord_stablization(zx, zy, r2);
+                if iteration == self.max_iteration {
+                    offset += 1;
+                    continue;
+                }
+
+                let value = iteration as f32 / self.max_iteration as f32;
+                buffer.store_pixel(offset, value);
+                offset += 1;
+            }
+            print!("{}/{}\r", y, height);
+        }
+    }
+
+    pub fn coord_stablization(&self, x: f64, y: f64, r2: f64) -> usize {
+        let mut x = x;
+        let mut y = y;
+        let mut iteration = 0;
+        while x * x + y * y < r2 && iteration < self.max_iteration {
+            let xtemp = x * x - y * y;
+            y = 2.0 * x * y + self.cy;
+            x = xtemp + self.cx;
+            iteration += 1;
+        }
+        iteration
+    }
+}
+
 struct RGBABuffer<T> {
     data: Vec<T>,
     width: u32,
@@ -76,68 +157,6 @@ impl BufferTrait for RGBABuffer<Rgba> {
             a: f16::from_f32(1.0),
         };
         self.data[offset] = rgba;
-    }
-}
-
-fn main() {
-    let mut res = 1;
-    while res <= 32 {
-        let file_name = format!("julia_{}k.png", res);
-        println!("Generating {}", file_name);
-        println!(" - allocate buffer");
-        let mut buffer = RGBABuffer::<u8>::new(res * 1024, res * 1024);
-        println!(" - generate fractal");
-        generate_julia(&mut buffer, -0.8, 0.156);
-        println!(" - write image");
-        write_png(&file_name, buffer);
-        res += 1;
-    }
-    res = 1;
-    while res <= 32 {
-        let file_name = format!("julia_{}k.exr", res);
-        println!("Generating {}", file_name);
-        println!(" - allocate buffer");
-        let mut buffer = RGBABuffer::<Rgba>::new(res * 1024, res * 1024);
-        println!(" - generate fractal");
-        generate_julia(&mut buffer, -0.8, 0.156);
-        println!(" - write image");
-        write_openexr(&file_name, buffer);
-        res += 1;
-    }
-}
-
-fn generate_julia(buffer: &mut dyn BufferTrait, cx: f64, cy: f64) {
-    let r = 2.0;
-    let r2 = r * r;
-    let max_iteration = 256;
-
-    let width = buffer.get_width();
-    let height = buffer.get_height();
-
-    let mut offset = 0;
-    for y in 0..height {
-        for x in 0..width {
-            let mut zx = x as f64 / width as f64 - 0.5;
-            let mut zy = y as f64 / height as f64 - 0.5;
-
-            let mut iteration = 0;
-            while zx * zx + zy * zy < r2 && iteration < max_iteration {
-                let xtemp = zx * zx - zy * zy;
-                zy = 2.0 * zx * zy + cy;
-                zx = xtemp + cx;
-                iteration += 1;
-            }
-
-            if iteration == max_iteration {
-                offset += 1;
-                continue;
-            }
-
-            let value = iteration as f32 / max_iteration as f32;
-            buffer.store_pixel(offset, value);
-            offset += 1;
-        }
-        print!("{}/{}\r", y, height);
     }
 }
 
