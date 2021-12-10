@@ -11,10 +11,12 @@ struct RGBABuffer<T> {
 }
 
 pub trait BufferTrait {
-    fn new(width: u32, height: u32) -> Self where Self:Sized;
-fn    get_width(&self) -> u32;
-fn    get_height(&self) -> u32;
-fn    store_pixel(&mut self, offset:usize, value: f32); 
+    fn new(width: u32, height: u32) -> Self
+    where
+        Self: Sized;
+    fn get_width(&self) -> u32;
+    fn get_height(&self) -> u32;
+    fn store_pixel(&mut self, offset: usize, value: f32);
 }
 
 impl BufferTrait for RGBABuffer<u8> {
@@ -37,12 +39,12 @@ impl BufferTrait for RGBABuffer<u8> {
         return self.height;
     }
     fn store_pixel(&mut self, offset: usize, value: f32) {
-        let value_u8 = (value * 255.0 ) as u8;
+        let value_u8 = (value * 255.0) as u8;
         let data_offset = offset * 4;
         self.data[data_offset] = value_u8;
-        self.data[data_offset+1] = value_u8;
-        self.data[data_offset+2] = value_u8;
-        self.data[data_offset+3] = 255;
+        self.data[data_offset + 1] = value_u8;
+        self.data[data_offset + 2] = value_u8;
+        self.data[data_offset + 3] = 255;
     }
 }
 
@@ -176,4 +178,3 @@ fn write_openexr(file_name: &str, buffer: RGBABuffer<Rgba>) {
         file.write_pixels(buffer.height as i32).unwrap();
     }
 }
-
