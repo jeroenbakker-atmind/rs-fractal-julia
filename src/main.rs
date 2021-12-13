@@ -5,6 +5,7 @@ extern crate test;
 
 use openexr::prelude::*;
 
+#[cfg(test)]
 mod benchmark;
 mod buffer;
 mod julia;
