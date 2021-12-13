@@ -3,13 +3,13 @@ use test::Bencher;
 
 use crate::{
     buffer::{BufferTrait, RGBABuffer},
-    julia::Julia,
+    julia::{CPUBackend, Julia},
 };
 
 const BENCHMARK_RESOLUTION: u32 = 256;
 
 #[bench]
-fn bench_f64(bench: &mut Bencher) {
+fn bench_cpu_f64(bench: &mut Bencher) {
     let julia = Julia {
         cx: -0.8,
         cy: 0.156,
@@ -18,12 +18,12 @@ fn bench_f64(bench: &mut Bencher) {
     };
     let mut buffer = RGBABuffer::<Rgba>::new(BENCHMARK_RESOLUTION, BENCHMARK_RESOLUTION);
     bench.iter(|| {
-        julia.generate::<f64>(&mut buffer);
+        julia.generate::<CPUBackend<f64>>(&mut buffer);
     })
 }
 
 #[bench]
-fn bench_f32(bench: &mut Bencher) {
+fn bench_cpu_f32(bench: &mut Bencher) {
     let julia = Julia {
         cx: -0.8,
         cy: 0.156,
@@ -32,6 +32,6 @@ fn bench_f32(bench: &mut Bencher) {
     };
     let mut buffer = RGBABuffer::<Rgba>::new(BENCHMARK_RESOLUTION, BENCHMARK_RESOLUTION);
     bench.iter(|| {
-        julia.generate::<f32>(&mut buffer);
+        julia.generate::<CPUBackend<f32>>(&mut buffer);
     })
 }

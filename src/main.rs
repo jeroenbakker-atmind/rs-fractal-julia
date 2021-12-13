@@ -38,7 +38,7 @@ fn generate_png(julia: &Julia, resolution: u32) {
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);
     println!(" - generate fractal");
-    julia.generate::<f64>(&mut buffer);
+    julia.generate::<CPUBackend<f32>>(&mut buffer);
     println!(" - write image");
     write_png(&file_name, buffer);
 }
@@ -55,7 +55,7 @@ fn generate_openexr(julia: &Julia, resolution: u32) {
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<Rgba>::new(resolution * 1024, resolution * 1024);
     println!(" - generate fractal");
-    julia.generate::<f64>(&mut buffer);
+    julia.generate::<CPUBackend<f32>>(&mut buffer);
     println!(" - write image");
     write_openexr(&file_name, buffer);
 }
@@ -63,6 +63,8 @@ fn generate_openexr(julia: &Julia, resolution: u32) {
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
+
+use crate::julia::CPUBackend;
 
 fn write_png(file_name: &str, buffer: RGBABuffer<u8>) {
     let path = Path::new(file_name);
