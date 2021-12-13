@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Shl, Sub, Shr};
+use std::ops::{Add, Div, Mul, Shl, Shr, Sub};
 
 const PRECISION: i8 = 16;
 const PRECISION_MULTIPLIER: f32 = 65536.0;
