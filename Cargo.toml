@@ -9,3 +9,6 @@ edition = "2021"
 openexr = "*"
 half = "*"
 png = "*"
+
+[profile.release]
+lto = true

@@ -106,3 +106,39 @@ where
         }
     }
 }
+
+impl JuliaRow for f32 {
+    fn julia_row(&self, julia: &Julia, buffer: &mut dyn BufferTrait, row: u32, r2: f32) {
+        let max_iteration = julia.max_iteration;
+        let height = buffer.get_height();
+        let width = buffer.get_width();
+
+        let t_width = width as f32;
+        let t_half_width = t_width * 0.5;
+
+        let mut samples = vec![0_usize; width as usize];
+        let rel_y = (row as f32 - height as f32 * 0.5) / height as f32;
+
+        for x in 0..width as usize {
+            let rel_x = (x as f32) - t_half_width;
+            let mut zx = rel_x / t_width;
+            let mut zy = rel_y;
+
+            let mut iteration = 0;
+            while zx * zx + zy * zy < r2 && iteration < max_iteration {
+                let xtemp = zx * zx - zy * zy;
+                zy = 2.0 * zx * zy + julia.cy;
+                zx = xtemp + julia.cx;
+                iteration += 1;
+            }
+
+            samples[x] = iteration;
+        }
+
+        let mut offset = width as usize * row as usize;
+        for sample_offset in 0..width as usize {
+            self.store_pixel(samples[sample_offset], max_iteration, buffer, offset);
+            offset += 1;
+        }
+    }
+}
