@@ -23,8 +23,8 @@ fn main() {
         max_iteration: 256,
     };
 
-    generate_pngs(&julia, 1, 32);
-    generate_openexrs(&julia, 1, 64);
+    //generate_pngs(&julia, 1, 32);
+    generate_openexrs(&julia, 1, 8);
 }
 
 fn generate_pngs(julia: &Julia, from: u32, to: u32) {
@@ -46,7 +46,7 @@ fn generate_png(julia: &Julia, resolution: u32) {
 
 fn generate_openexrs(julia: &Julia, from: u32, to: u32) {
     for res in from..to {
-        generate_openexr(julia, res);
+        generate_openexr_per_row(julia, res);
     }
 }
 
@@ -61,11 +61,44 @@ fn generate_openexr(julia: &Julia, resolution: u32) {
     write_openexr(&file_name, buffer);
 }
 
+fn generate_openexr_per_row(julia: &Julia, resolution: u32) {
+    let file_name = format!("julia_{}k_row.exr", resolution);
+    println!("Generating {}", file_name);
+    println!(" - allocate buffer");
+    let mut buffer = RGBABuffer::<Rgba>::new(resolution * 1024, resolution * 1024);
+    println!(" - generate fractal");
+
+    let res = resolution as usize * 1024;
+
+    let r2 = julia.r * julia.r;
+
+    let height = buffer.get_height();
+    let backend = CPUBackend::<f32>::default();
+    let mut row_buffer = Vec::with_capacity(res);
+
+    let header = Header::from_dimensions(res as i32, res as i32);
+    let mut file = RgbaOutputFile::new(file_name, &header, RgbaChannels::WriteRgba, 1).unwrap();
+    file.set_frame_buffer(&buffer.data, 1, 0).unwrap();
+
+    for y in 0..height {
+        row_buffer.clear();
+        backend.julia_row(julia, &mut row_buffer, res, res, y, r2);
+        backend.store(julia, &mut buffer, 0, &row_buffer);
+
+        unsafe {
+            file.write_pixels(1).unwrap();
+        }
+
+        print!("{}/{}\r", y, height);
+    }
+}
+
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
 
 use crate::julia::CPUBackend;
+use crate::julia::JuliaRow;
 
 fn write_png(file_name: &str, buffer: RGBABuffer<u8>) {
     let path = Path::new(file_name);

@@ -23,14 +23,51 @@ impl Julia {
         let backend = T::default();
 
         for y in 0..height {
-            backend.julia_row(self, buffer, y, r2);
+            backend.julia_row_and_store(self, buffer, y, r2);
             print!("{}/{}\r", y, height);
         }
     }
 }
 
 pub trait JuliaRow: Default {
-    fn julia_row(&self, julia: &Julia, buffer: &mut dyn BufferTrait, row: u32, r2: f32);
+    fn julia_row(
+        &self,
+        julia: &Julia,
+        row_buffer: &mut Vec<usize>,
+        width: usize,
+        height: usize,
+        row: u32,
+        r2: f32,
+    );
+
+    fn julia_row_and_store(&self, julia: &Julia, buffer: &mut dyn BufferTrait, row: u32, r2: f32) {
+        let width = buffer.get_width() as usize;
+        let height = buffer.get_height() as usize;
+        let mut row_buffer = Vec::with_capacity(width);
+        self.julia_row(julia, &mut row_buffer, width, height, row, r2);
+        self.store(julia, buffer, row, &row_buffer);
+    }
+
+    fn store(
+        &self,
+        julia: &Julia,
+        buffer: &mut dyn BufferTrait,
+        row: u32,
+        row_buffer: &Vec<usize>,
+    ) {
+        let width = buffer.get_width() as usize;
+        let mut offset = width * row as usize;
+        for sample_offset in 0..width {
+            self.store_pixel(
+                row_buffer[sample_offset],
+                julia.max_iteration,
+                buffer,
+                offset,
+            );
+            offset += 1;
+        }
+    }
+
     fn store_pixel(
         &self,
         iteration: usize,
@@ -39,6 +76,7 @@ pub trait JuliaRow: Default {
         offset: usize,
     ) {
         if iteration == max_iteration {
+            buffer.clear_pixel(offset);
             return;
         }
         let value = iteration as f32 / max_iteration as f32;
@@ -68,11 +106,17 @@ where
         + Sub<T, Output = T>
         + PartialOrd<T>,
 {
-    fn julia_row(&self, julia: &Julia, buffer: &mut dyn BufferTrait, row: u32, r2: f32) {
+    fn julia_row(
+        &self,
+        julia: &Julia,
+        row_buffer: &mut Vec<usize>,
+        width: usize,
+        height: usize,
+        row: u32,
+        r2: f32,
+    ) {
         let r2 = T::from(r2);
         let max_iteration = julia.max_iteration;
-        let height = buffer.get_height();
-        let width = buffer.get_width();
 
         let two = T::from(2.0);
         let cx = T::from(julia.cx);
@@ -80,7 +124,6 @@ where
         let t_width = T::from(width as f32);
         let t_half_width = T::from(width as f32 * 0.5);
 
-        let mut samples = vec![0_usize; width as usize];
         let rel_y = T::from((row as f32 - height as f32 * 0.5) / height as f32);
 
         for x in 0..width as usize {
@@ -95,28 +138,26 @@ where
                 zx = xtemp + cx;
                 iteration += 1;
             }
-
-            samples[x] = iteration;
-        }
-
-        let mut offset = width as usize * row as usize;
-        for sample_offset in 0..width as usize {
-            self.store_pixel(samples[sample_offset], max_iteration, buffer, offset);
-            offset += 1;
+            row_buffer.push(iteration);
         }
     }
 }
 
 impl JuliaRow for f32 {
-    fn julia_row(&self, julia: &Julia, buffer: &mut dyn BufferTrait, row: u32, r2: f32) {
+    fn julia_row(
+        &self,
+        julia: &Julia,
+        row_buffer: &mut Vec<usize>,
+        width: usize,
+        height: usize,
+        row: u32,
+        r2: f32,
+    ) {
         let max_iteration = julia.max_iteration;
-        let height = buffer.get_height();
-        let width = buffer.get_width();
 
         let t_width = width as f32;
         let t_half_width = t_width * 0.5;
 
-        let mut samples = vec![0_usize; width as usize];
         let rel_y = (row as f32 - height as f32 * 0.5) / height as f32;
 
         for x in 0..width as usize {
@@ -132,13 +173,7 @@ impl JuliaRow for f32 {
                 iteration += 1;
             }
 
-            samples[x] = iteration;
-        }
-
-        let mut offset = width as usize * row as usize;
-        for sample_offset in 0..width as usize {
-            self.store_pixel(samples[sample_offset], max_iteration, buffer, offset);
-            offset += 1;
+            row_buffer.push(iteration);
         }
     }
 }

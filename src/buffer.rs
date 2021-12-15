@@ -14,6 +14,7 @@ pub trait BufferTrait {
     fn get_width(&self) -> u32;
     fn get_height(&self) -> u32;
     fn store_pixel(&mut self, offset: usize, value: f32);
+    fn clear_pixel(&mut self, offset: usize);
 }
 
 impl BufferTrait for RGBABuffer<u8> {
@@ -43,6 +44,14 @@ impl BufferTrait for RGBABuffer<u8> {
         self.data[data_offset + 2] = value_u8;
         self.data[data_offset + 3] = 255;
     }
+    fn clear_pixel(&mut self, offset: usize) {
+        let value_u8 = 0;
+        let data_offset = offset * 4;
+        self.data[data_offset] = 0;
+        self.data[data_offset + 1] = 0;
+        self.data[data_offset + 2] = 0;
+        self.data[data_offset + 3] = 0;
+    }
 }
 
 impl BufferTrait for RGBABuffer<Rgba> {
@@ -71,6 +80,16 @@ impl BufferTrait for RGBABuffer<Rgba> {
             g: value_half,
             b: value_half,
             a: f16::from_f32(1.0),
+        };
+        self.data[offset] = rgba;
+    }
+    fn clear_pixel(&mut self, offset: usize) {
+        let value_half = f16::from_f32(0.0);
+        let rgba = Rgba {
+            r: value_half,
+            g: value_half,
+            b: value_half,
+            a: value_half,
         };
         self.data[offset] = rgba;
     }
