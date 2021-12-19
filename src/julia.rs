@@ -177,3 +177,87 @@ impl JuliaRow for f32 {
         }
     }
 }
+
+#[derive(Default)]
+pub struct AsmXmm;
+
+impl JuliaRow for AsmXmm {
+    fn julia_row(
+        &self,
+        julia: &Julia,
+        row_buffer: &mut Vec<usize>,
+        width: usize,
+        height: usize,
+        row: u32,
+        r2: f32,
+    ) {
+        let max_iteration = julia.max_iteration;
+
+        let t_width = width as f32;
+        let t_half_width = t_width * 0.5;
+
+        let rel_y = (row as f32 - height as f32 * 0.5) / height as f32;
+
+        for x in 0..width as usize {
+            let rel_x = (x as f32) - t_half_width;
+            let zx = rel_x / t_width;
+            let zy = rel_y;
+
+            let mut iteration = 0;
+            /*
+            while zx * zx + zy * zy < r2 && iteration < max_iteration {
+                let xtemp = zx * zx - zy * zy;
+                zy = 2.0 * zx * zy + julia.cy;
+                zx = xtemp + julia.cx;
+                iteration += 1;
+            }*/
+
+            unsafe {
+                //xmm0 = zx
+                //xmm1 = zy
+                //xmm2 = r2
+                //xmm3 = cy
+                //xmm4 = cx
+                //xmm5 = zx*zx
+                //xmm6 = zy*zy
+                //xmm7 = zx*zx+ zy*zy
+                //xmm8 = zx*zx- zy*zy
+                //eax = iteration Out only.
+                //edx = max_iteration
+                asm!(
+                    "xor eax, eax",
+                "2:",
+                    "vmulss xmm5, xmm0, xmm0",
+                    "vmulss xmm6, xmm1, xmm1",
+                    "vaddss xmm7, xmm5, xmm6",
+                    "comiss xmm7, xmm2",
+                    "jnb 3f",
+                    "cmp eax, edx",
+                    "jnl 3f",
+                    // xtemp
+                    "vsubss xmm8, xmm5, xmm6",
+                    // zy
+                    "addss xmm1, xmm1",
+                    "mulss xmm1, xmm0",
+                    "addss xmm1, xmm3",
+                    // zx
+                    "vaddss xmm0, xmm8, xmm4",
+
+                    "inc eax",
+                    "jmp 2b",
+                "3:",
+
+                    in("xmm0") zx,
+                    in("xmm1") zy,
+                    in("xmm2") r2,
+                    in("xmm3") julia.cy,
+                    in("xmm4") julia.cx,
+                    in("edx") max_iteration,
+                    out("eax") iteration,
+                );
+            }
+
+            row_buffer.push(iteration);
+        }
+    }
+}

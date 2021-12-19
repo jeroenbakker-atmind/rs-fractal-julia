@@ -1,3 +1,4 @@
+#![feature(asm)]
 #![feature(test)]
 extern crate openexr;
 extern crate png;
@@ -23,8 +24,8 @@ fn main() {
         max_iteration: 256,
     };
 
-    //generate_pngs(&julia, 1, 32);
-    generate_openexrs(&julia, 1, 8);
+    generate_pngs(&julia, 1, 2);
+    //generate_openexrs(&julia, 32, 33);
 }
 
 fn generate_pngs(julia: &Julia, from: u32, to: u32) {
@@ -39,7 +40,7 @@ fn generate_png(julia: &Julia, resolution: u32) {
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);
     println!(" - generate fractal");
-    julia.generate::<CPUBackend<f32>>(&mut buffer);
+    julia.generate::<AsmXmm>(&mut buffer);
     println!(" - write image");
     write_png(&file_name, buffer);
 }
@@ -99,6 +100,7 @@ use std::path::Path;
 
 use crate::julia::CPUBackend;
 use crate::julia::JuliaRow;
+use crate::julia::AsmXmm;
 
 fn write_png(file_name: &str, buffer: RGBABuffer<u8>) {
     let path = Path::new(file_name);
