@@ -179,9 +179,9 @@ impl JuliaRow for f32 {
 }
 
 #[derive(Default)]
-pub struct AsmXmm;
+pub struct AsmX86;
 
-impl JuliaRow for AsmXmm {
+impl JuliaRow for AsmX86 {
     fn julia_row(
         &self,
         julia: &Julia,
@@ -203,7 +203,7 @@ impl JuliaRow for AsmXmm {
             let zx = rel_x / t_width;
             let zy = rel_y;
 
-            let mut iteration = 0;
+            let mut iteration;
             /*
             while zx * zx + zy * zy < r2 && iteration < max_iteration {
                 let xtemp = zx * zx - zy * zy;

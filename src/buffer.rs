@@ -44,8 +44,8 @@ impl BufferTrait for RGBABuffer<u8> {
         self.data[data_offset + 2] = value_u8;
         self.data[data_offset + 3] = 255;
     }
+
     fn clear_pixel(&mut self, offset: usize) {
-        let value_u8 = 0;
         let data_offset = offset * 4;
         self.data[data_offset] = 0;
         self.data[data_offset + 1] = 0;

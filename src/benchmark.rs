@@ -4,7 +4,7 @@ use test::Bencher;
 use crate::{
     buffer::{BufferTrait, RGBABuffer},
     fixed_point::FixedPoint,
-    julia::{AsmXmm, CPUBackend, Julia},
+    julia::{AsmX86, CPUBackend, Julia},
 };
 
 const BENCHMARK_RESOLUTION: u32 = 256;
@@ -88,6 +88,6 @@ fn bench_asm_xmm(bench: &mut Bencher) {
     };
     let mut buffer = RGBABuffer::<Rgba>::new(BENCHMARK_RESOLUTION, BENCHMARK_RESOLUTION);
     bench.iter(|| {
-        julia.generate::<AsmXmm>(&mut buffer);
+        julia.generate::<AsmX86>(&mut buffer);
     })
 }
