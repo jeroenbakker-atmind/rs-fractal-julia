@@ -1,10 +1,10 @@
 extern crate png;
-extern crate rs_fractal_julia;
+extern crate fractal_julia;
 
-use rs_fractal_julia::buffer::BufferTrait;
-use rs_fractal_julia::buffer::RGBABuffer;
-use rs_fractal_julia::julia::AsmX86;
-use rs_fractal_julia::julia::Julia;
+use fractal_julia::buffer::BufferTrait;
+use fractal_julia::buffer::RGBABuffer;
+use fractal_julia::julia::AsmX86;
+use fractal_julia::julia::Julia;
 
 use std::fs::File;
 use std::io::BufWriter;

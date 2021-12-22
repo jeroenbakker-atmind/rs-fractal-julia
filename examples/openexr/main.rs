@@ -1,13 +1,13 @@
+extern crate fractal_julia;
 extern crate openexr;
-extern crate rs_fractal_julia;
 
 use openexr::prelude::*;
 
-use rs_fractal_julia::buffer::BufferTrait;
-use rs_fractal_julia::buffer::RGBABuffer;
-use rs_fractal_julia::julia::CPUBackend;
-use rs_fractal_julia::julia::Julia;
-use rs_fractal_julia::julia::JuliaRow;
+use fractal_julia::buffer::BufferTrait;
+use fractal_julia::buffer::RGBABuffer;
+use fractal_julia::julia::CPUBackend;
+use fractal_julia::julia::Julia;
+use fractal_julia::julia::JuliaRow;
 
 fn main() {
     let julia = Julia {

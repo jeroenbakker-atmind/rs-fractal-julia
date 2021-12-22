@@ -204,45 +204,51 @@ impl JuliaRow for AsmX86 {
             let zy = rel_y;
 
             let mut iteration;
-            /*
-            while zx * zx + zy * zy < r2 && iteration < max_iteration {
-                let xtemp = zx * zx - zy * zy;
-                zy = 2.0 * zx * zy + julia.cy;
-                zx = xtemp + julia.cx;
-                iteration += 1;
-            }*/
 
             unsafe {
+                // Inputs:
                 //xmm0 = zx
                 //xmm1 = zy
                 //xmm2 = r2
                 //xmm3 = cy
                 //xmm4 = cx
+
+                // Outputs:
+                //eax = iteration
+
+                // Variables stored in registries.
                 //xmm5 = zx*zx
                 //xmm6 = zy*zy
-                //xmm7 = zx*zx+ zy*zy
-                //xmm8 = zx*zx- zy*zy
-                //eax = iteration Out only.
                 //edx = max_iteration
+
+                // xmm7 scope is local so can be reused.
+                //xmm7 = zx*zx+ zy*zy
+                //xmm7 = zx*zx- zy*zy
                 asm!(
                     "xor eax, eax",
                 "2:",
+                    // update xmm5  (zx * zx)
                     "vmulss xmm5, xmm0, xmm0",
+                    // update xmm6 (zy * zy)
                     "vmulss xmm6, xmm1, xmm1",
+                    // update xmm7 (xmm5 + xmm6)
                     "vaddss xmm7, xmm5, xmm6",
+                    // Compare with xmm2 (r2)
                     "comiss xmm7, xmm2",
                     "jnb 3f",
+                    // Compare current iteration with max_iteration
                     "cmp eax, edx",
                     "jnl 3f",
-                    // xtemp
-                    "vsubss xmm8, xmm5, xmm6",
-                    // zy
+                    // xmm7 = xtemp = (zx * zx - zy * zy)
+                    "vsubss xmm7, xmm5, xmm6",
+                    // zy = 2 * zx * zy + cy
                     "addss xmm1, xmm1",
                     "mulss xmm1, xmm0",
                     "addss xmm1, xmm3",
-                    // zx
-                    "vaddss xmm0, xmm8, xmm4",
+                    // zx = xtemp + cx
+                    "vaddss xmm0, xmm7, xmm4",
 
+                    // iteration += 1
                     "inc eax",
                     "jmp 2b",
                 "3:",
