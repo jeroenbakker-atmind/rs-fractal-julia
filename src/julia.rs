@@ -45,6 +45,8 @@ pub trait JuliaRow: Default {
         let height = buffer.get_height() as usize;
         let mut row_buffer = Vec::with_capacity(width);
         self.julia_row(julia, &mut row_buffer, width, height, row, r2);
+        assert_eq!(row_buffer.capacity(), width);
+        assert_eq!(row_buffer.len(), width);
         self.store(julia, buffer, row, &row_buffer);
     }
 
@@ -193,6 +195,10 @@ impl JuliaRow for AsmX86 {
     ) {
         let max_iteration = julia.max_iteration;
         row_buffer.reserve_exact(width);
+        unsafe {
+            row_buffer.set_len(width);
+        }
+        let mut buffer = row_buffer.as_mut_ptr();
         let t_width = width as f32;
         let t_half_width = t_width * 0.5;
 
@@ -202,7 +208,6 @@ impl JuliaRow for AsmX86 {
             let rel_x = (x as f32) - t_half_width;
             let zx = rel_x / t_width;
             let zy = rel_y;
-            let iteration: usize;
 
             unsafe {
                 // Inputs:
@@ -211,9 +216,7 @@ impl JuliaRow for AsmX86 {
                 //xmm2 = r2
                 //xmm3 = cy
                 //xmm4 = cx
-
-                // Outputs:
-                //eax = iteration
+                //edi = address to store result (iteration)
 
                 // Variables stored in registries.
                 //xmm5 = zx*zx
@@ -224,48 +227,48 @@ impl JuliaRow for AsmX86 {
                 //xmm7 = zx*zx+ zy*zy
                 //xmm7 = zx*zx- zy*zy
                 asm!(
-                    "xor rax, rax",
+                    "xor {9}, {9}",
                     "2:",
                     // update xmm5  (zx * zx)
-                    "vmulss xmm5, xmm0, xmm0",
+                    "vmulss {5}, {0}, {0}",
                     // update xmm6 (zy * zy)
-                    "vmulss xmm6, xmm1, xmm1",
+                    "vmulss {6}, {1}, {1}",
                     // update xmm7 (xmm5 + xmm6)
-                    "vaddss xmm7, xmm5, xmm6",
+                    "vaddss {7}, {5}, {6}",
                     // Compare with xmm2 (r2)
-                    "comiss xmm7, xmm2",
+                    "comiss {7}, {2}",
                     "jnb 3f",
                     // Compare current iteration with max_iteration
-                    "cmp eax, edx",
+                    "cmp {9}, {8}",
                     "jnl 3f",
                     // xmm7 = xtemp = (zx * zx - zy * zy)
-                    "vsubss xmm7, xmm5, xmm6",
+                    "vsubss {7}, {5}, {6}",
                     // zy = 2 * zx * zy + cy
-                    "addss xmm1, xmm1",
-                    "mulss xmm1, xmm0",
-                    "addss xmm1, xmm3",
+                    "addss {1}, {1}",
+                    "mulss {1}, {0}",
+                    "addss {1}, {3}",
                     // zx = xtemp + cx
-                    "vaddss xmm0, xmm7, xmm4",
+                    "vaddss {0}, {7}, {4}",
 
                     // iteration += 1
-                    "inc eax",
+                    "inc {9}",
                     "jmp 2b",
                     "3:",
-                    "mov [rdi], rax",
+                    "mov qword ptr [{10}], {9}",
+                    "add {10}, 8",
 
-                    in("xmm0") zx,
-                    in("xmm1") zy,
-                    in("xmm2") r2,
-                    in("xmm3") julia.cy,
-                    in("xmm4") julia.cx,
-                    in("edx") max_iteration,
-                    in("rdi") row_buffer.as_ptr().add(x),
-                    out("rax") iteration,
+                    inout(xmm_reg) zx => _,
+                    inout(xmm_reg) zy => _,
+                    in(xmm_reg) r2,
+                    in(xmm_reg) julia.cy,
+                    in(xmm_reg) julia.cx,
+                    out(xmm_reg) _,
+                    out(xmm_reg) _,
+                    out(xmm_reg) _,
+                    in(reg) max_iteration,
+                    out(reg) _,
+                    inout(reg) buffer,
                 );
-
-                // *buffer.add(x) = iteration;
-                // assert_eq!(*buffer.add(x), iteration);
-                row_buffer.push(iteration);
             }
         }
     }
