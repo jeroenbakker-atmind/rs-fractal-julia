@@ -1,5 +1,5 @@
-extern crate png;
 extern crate fractal_julia;
+extern crate png;
 
 use fractal_julia::buffer::BufferTrait;
 use fractal_julia::buffer::RGBABuffer;
@@ -18,7 +18,7 @@ fn main() {
         max_iteration: 256,
     };
 
-    generate_pngs(&julia, 1, 9);
+    generate_pngs(&julia, 1, 3);
 }
 
 fn generate_pngs(julia: &Julia, from: u32, to: u32) {

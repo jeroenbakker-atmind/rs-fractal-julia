@@ -1,5 +1,6 @@
 #![feature(asm)]
 #![feature(test)]
+#![feature(vec_into_raw_parts)]
 
 #[cfg(test)]
 extern crate test;

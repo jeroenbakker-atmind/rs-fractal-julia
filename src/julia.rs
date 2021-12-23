@@ -192,7 +192,7 @@ impl JuliaRow for AsmX86 {
         r2: f32,
     ) {
         let max_iteration = julia.max_iteration;
-
+        row_buffer.reserve_exact(width);
         let t_width = width as f32;
         let t_half_width = t_width * 0.5;
 
@@ -202,8 +202,7 @@ impl JuliaRow for AsmX86 {
             let rel_x = (x as f32) - t_half_width;
             let zx = rel_x / t_width;
             let zy = rel_y;
-
-            let mut iteration;
+            let iteration: usize;
 
             unsafe {
                 // Inputs:
@@ -225,8 +224,8 @@ impl JuliaRow for AsmX86 {
                 //xmm7 = zx*zx+ zy*zy
                 //xmm7 = zx*zx- zy*zy
                 asm!(
-                    "xor eax, eax",
-                "2:",
+                    "xor rax, rax",
+                    "2:",
                     // update xmm5  (zx * zx)
                     "vmulss xmm5, xmm0, xmm0",
                     // update xmm6 (zy * zy)
@@ -251,7 +250,8 @@ impl JuliaRow for AsmX86 {
                     // iteration += 1
                     "inc eax",
                     "jmp 2b",
-                "3:",
+                    "3:",
+                    "mov [rdi], rax",
 
                     in("xmm0") zx,
                     in("xmm1") zy,
@@ -259,11 +259,70 @@ impl JuliaRow for AsmX86 {
                     in("xmm3") julia.cy,
                     in("xmm4") julia.cx,
                     in("edx") max_iteration,
-                    out("eax") iteration,
+                    in("rdi") row_buffer.as_ptr().add(x),
+                    out("rax") iteration,
                 );
-            }
 
-            row_buffer.push(iteration);
+                // *buffer.add(x) = iteration;
+                // assert_eq!(*buffer.add(x), iteration);
+                row_buffer.push(iteration);
+            }
         }
+    }
+}
+
+#[test]
+fn direct_buffer() {
+    let mut vec = Vec::<usize>::new();
+    vec.reserve_exact(100);
+
+    unsafe {
+        vec.set_len(100);
+    }
+
+    let ptr = vec.as_mut_ptr();
+    for i in 0..100 {
+        unsafe {
+            *ptr.add(i) = i;
+        }
+    }
+
+    for i in 0..100 {
+        assert_eq!(i, vec[i]);
+    }
+}
+
+#[test]
+fn direct_buffer_asm() {
+    let mut vec = Vec::<usize>::new();
+    vec.reserve_exact(4096);
+
+    unsafe {
+        vec.set_len(4096);
+    }
+
+    let ptr = vec.as_mut_ptr();
+    unsafe {
+        asm!(
+            "xor eax, eax",
+            "mov edx, 4096",
+        "2:",
+            "mov [rdi], rax",
+            "add rdi, 8",
+            "inc eax",
+            "cmp eax, edx",
+            "jb 2b",
+            in("rdi") ptr,
+        );
+    }
+
+    for i in 0..4096 {
+        unsafe {
+            *ptr.add(i) = i;
+        }
+    }
+
+    for i in 0..4096 {
+        assert_eq!(i, vec[i]);
     }
 }
