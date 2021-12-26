@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use crate::buffer::BufferTrait;
+use crate::{buffer::BufferTrait, julia_sample_xmm};
 
 pub struct Julia {
     pub r: f32,
@@ -183,6 +183,13 @@ impl JuliaRow for f32 {
 #[derive(Default)]
 pub struct AsmX86;
 
+#[repr(C)]
+pub struct AsmX86Input {
+    pub cx: f32,
+    pub cy: f32,
+    pub iteration: usize,
+}
+
 impl JuliaRow for AsmX86 {
     fn julia_row(
         &self,
@@ -193,23 +200,19 @@ impl JuliaRow for AsmX86 {
         row: u32,
         r2: f32,
     ) {
-        let max_iteration = julia.max_iteration;
         row_buffer.reserve_exact(width);
         unsafe {
             row_buffer.set_len(width);
         }
         let mut buffer = row_buffer.as_mut_ptr();
-        let t_width = width as f32;
-        let t_half_width = t_width * 0.5;
 
-        let rel_y = (row as f32 - height as f32 * 0.5) / height as f32;
+        let zy = (row as f32 - height as f32 * 0.5) / height as f32;
+        let rx_add = 1.0 / width as f32;
+        let mut zx = -0.5;
 
         for x in 0..width as usize {
-            let rel_x = (x as f32) - t_half_width;
-            let zx = rel_x / t_width;
-            let zy = rel_y;
-
             unsafe {
+                let iteration;
                 // Inputs:
                 //xmm0 = zx
                 //xmm1 = zy
@@ -229,13 +232,13 @@ impl JuliaRow for AsmX86 {
                 asm!(
                     "xor {9}, {9}",
                     "2:",
-                    // update xmm5  (zx * zx)
+                    // update reg5xmm = (zx * zx)
                     "vmulss {5}, {0}, {0}",
-                    // update xmm6 (zy * zy)
+                    // update reg6xmm = (zy * zy)
                     "vmulss {6}, {1}, {1}",
-                    // update xmm7 (xmm5 + xmm6)
+                    // update reg7xmm = (xmm5 + xmm6)
                     "vaddss {7}, {5}, {6}",
-                    // Compare with xmm2 (r2)
+                    // Compare with reg2xmm (r2)
                     "comiss {7}, {2}",
                     "jnb 3f",
                     // Compare current iteration with max_iteration
@@ -254,8 +257,8 @@ impl JuliaRow for AsmX86 {
                     "inc {9}",
                     "jmp 2b",
                     "3:",
-                    "mov qword ptr [{10}], {9}",
-                    "add {10}, 8",
+                    //"mov qword ptr [{10}], {9}",
+                    //"add {10}, 8",
 
                     inout(xmm_reg) zx => _,
                     inout(xmm_reg) zy => _,
@@ -265,11 +268,18 @@ impl JuliaRow for AsmX86 {
                     out(xmm_reg) _,
                     out(xmm_reg) _,
                     out(xmm_reg) _,
-                    in(reg) max_iteration,
-                    out(reg) _,
-                    inout(reg) buffer,
+                    in(reg) julia.max_iteration,
+                    out(reg) iteration,
+                    // inout(reg) buffer,
                 );
+                let parameters = AsmX86Input {
+                    cx: julia.cx,
+                    cy: julia.cy,
+                    iteration: iteration,
+                };
+                julia_sample_xmm(buffer.add(x), &parameters);
             }
+            zx += rx_add;
         }
     }
 }

@@ -21,5 +21,8 @@ half = "*"
 [dev-dependencies]
 png = "*"
 
+[build-dependencies]
+cc = "1.0.3"
+
 [profile.release]
 lto = true
