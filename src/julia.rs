@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use crate::{buffer::BufferTrait, julia_sample_xmm};
+use crate::{buffer::BufferTrait, julia_sample_xmm_scalar};
 
 pub struct Julia {
     pub r: f32,
@@ -185,9 +185,12 @@ pub struct AsmX86;
 
 #[repr(C)]
 pub struct AsmX86Input {
+    pub zx: f32,
+    pub zy: f32,
+    pub r2: f32,
     pub cx: f32,
     pub cy: f32,
-    pub iteration: usize,
+    pub max_iteration: usize,
 }
 
 impl JuliaRow for AsmX86 {
@@ -204,7 +207,7 @@ impl JuliaRow for AsmX86 {
         unsafe {
             row_buffer.set_len(width);
         }
-        let mut buffer = row_buffer.as_mut_ptr();
+        let buffer = row_buffer.as_mut_ptr();
 
         let zy = (row as f32 - height as f32 * 0.5) / height as f32;
         let rx_add = 1.0 / width as f32;
@@ -212,72 +215,15 @@ impl JuliaRow for AsmX86 {
 
         for x in 0..width as usize {
             unsafe {
-                let iteration;
-                // Inputs:
-                //xmm0 = zx
-                //xmm1 = zy
-                //xmm2 = r2
-                //xmm3 = cy
-                //xmm4 = cx
-                //edi = address to store result (iteration)
-
-                // Variables stored in registries.
-                //xmm5 = zx*zx
-                //xmm6 = zy*zy
-                //edx = max_iteration
-
-                // xmm7 scope is local so can be reused.
-                //xmm7 = zx*zx+ zy*zy
-                //xmm7 = zx*zx- zy*zy
-                asm!(
-                    "xor {9}, {9}",
-                    "2:",
-                    // update reg5xmm = (zx * zx)
-                    "vmulss {5}, {0}, {0}",
-                    // update reg6xmm = (zy * zy)
-                    "vmulss {6}, {1}, {1}",
-                    // update reg7xmm = (xmm5 + xmm6)
-                    "vaddss {7}, {5}, {6}",
-                    // Compare with reg2xmm (r2)
-                    "comiss {7}, {2}",
-                    "jnb 3f",
-                    // Compare current iteration with max_iteration
-                    "cmp {9}, {8}",
-                    "jnl 3f",
-                    // xmm7 = xtemp = (zx * zx - zy * zy)
-                    "vsubss {7}, {5}, {6}",
-                    // zy = 2 * zx * zy + cy
-                    "addss {1}, {1}",
-                    "mulss {1}, {0}",
-                    "addss {1}, {3}",
-                    // zx = xtemp + cx
-                    "vaddss {0}, {7}, {4}",
-
-                    // iteration += 1
-                    "inc {9}",
-                    "jmp 2b",
-                    "3:",
-                    //"mov qword ptr [{10}], {9}",
-                    //"add {10}, 8",
-
-                    inout(xmm_reg) zx => _,
-                    inout(xmm_reg) zy => _,
-                    in(xmm_reg) r2,
-                    in(xmm_reg) julia.cy,
-                    in(xmm_reg) julia.cx,
-                    out(xmm_reg) _,
-                    out(xmm_reg) _,
-                    out(xmm_reg) _,
-                    in(reg) julia.max_iteration,
-                    out(reg) iteration,
-                    // inout(reg) buffer,
-                );
                 let parameters = AsmX86Input {
+                    zx: zx,
+                    zy: zy,
+                    r2: r2,
                     cx: julia.cx,
                     cy: julia.cy,
-                    iteration: iteration,
+                    max_iteration: julia.max_iteration,
                 };
-                julia_sample_xmm(buffer.add(x), &parameters);
+                julia_sample_xmm_scalar(buffer.add(x), &parameters);
             }
             zx += rx_add;
         }
