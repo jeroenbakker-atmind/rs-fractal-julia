@@ -6,6 +6,6 @@
 .globl julia_sample_xmm
 
 julia_sample_xmm:
-    movq input_iteration(%rsi), %rax
-    movq %rax, (%rdi)
+    mov rax, [rsi+input_iteration]
+    mov [rdi], rax
     ret
