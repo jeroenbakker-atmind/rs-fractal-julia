@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
-use crate::{buffer::BufferTrait, julia_sample_xmm_scalar};
+use crate::{buffer::BufferTrait, julia_row_xmm_scalar};
 
 pub struct Julia {
     pub r: f32,
@@ -185,11 +185,21 @@ pub struct AsmX86;
 
 #[repr(C)]
 pub struct AsmX86Input {
-    pub zx: f32,
+    // 0
     pub zy: f32,
+    // 4
     pub r2: f32,
+    // 8
     pub cx: f32,
+    // 12
     pub cy: f32,
+    // 16
+    pub zx_min: f32,
+    // 20
+    pub zx_max: f32,
+    // 24
+    pub width: usize,
+    // 32
     pub max_iteration: usize,
 }
 
@@ -208,24 +218,20 @@ impl JuliaRow for AsmX86 {
             row_buffer.set_len(width);
         }
         let buffer = row_buffer.as_mut_ptr();
-
-        let zy = (row as f32 - height as f32 * 0.5) / height as f32;
-        let rx_add = 1.0 / width as f32;
-        let mut zx = -0.5;
-
-        for x in 0..width as usize {
-            unsafe {
-                let parameters = AsmX86Input {
-                    zx: zx,
-                    zy: zy,
-                    r2: r2,
-                    cx: julia.cx,
-                    cy: julia.cy,
-                    max_iteration: julia.max_iteration,
-                };
-                julia_sample_xmm_scalar(buffer.add(x), &parameters);
-            }
-            zx += rx_add;
+        let factor = row as f32 / height as f32;
+        let zy = factor * 0.5 + (1.0 - factor) * -0.5;
+        unsafe {
+            let parameters = AsmX86Input {
+                zy: zy,
+                r2: r2,
+                cx: julia.cx,
+                cy: julia.cy,
+                max_iteration: julia.max_iteration,
+                zx_min: -0.5,
+                zx_max: 0.5,
+                width: width,
+            };
+            julia_row_xmm_scalar(buffer, &parameters);
         }
     }
 }

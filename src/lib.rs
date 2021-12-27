@@ -8,7 +8,7 @@ use julia::AsmX86Input;
 extern crate test;
 
 extern "C" {
-    fn julia_sample_xmm_scalar(dest: *mut usize, parameters: &AsmX86Input);
+    fn julia_row_xmm_scalar(dest: *mut usize, parameters: &AsmX86Input);
 }
 
 #[cfg(test)]
