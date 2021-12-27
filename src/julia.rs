@@ -219,7 +219,9 @@ impl JuliaRow for AsmX86 {
         }
         let buffer = row_buffer.as_mut_ptr();
         let factor = row as f32 / height as f32;
-        let zy = factor * 0.5 + (1.0 - factor) * -0.5;
+        let min = -0.5;
+        let max = -min;
+        let zy = factor * max + (1.0 - factor) * min;
         unsafe {
             let parameters = AsmX86Input {
                 zy: zy,
@@ -227,8 +229,8 @@ impl JuliaRow for AsmX86 {
                 cx: julia.cx,
                 cy: julia.cy,
                 max_iteration: julia.max_iteration,
-                zx_min: -0.5,
-                zx_max: 0.5,
+                zx_min: min,
+                zx_max: max,
                 width: width,
             };
             julia_row_xmm_scalar(buffer, &parameters);
