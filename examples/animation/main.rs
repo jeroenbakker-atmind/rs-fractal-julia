@@ -6,7 +6,6 @@ use fractal_julia::buffer::RGBABuffer;
 use fractal_julia::julia::AsmX86;
 use fractal_julia::julia::Julia;
 
-use core::num;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
