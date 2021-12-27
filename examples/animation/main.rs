@@ -6,29 +6,32 @@ use fractal_julia::buffer::RGBABuffer;
 use fractal_julia::julia::AsmX86;
 use fractal_julia::julia::Julia;
 
+use core::num;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
 
 fn main() {
-    let julia = Julia {
-        r: 2.0,
-        cx: -0.7,
-        cy: 0.156,
-        max_iteration: 256,
-    };
-
-    generate_pngs(&julia, 1, 3);
-}
-
-fn generate_pngs(julia: &Julia, from: u32, to: u32) {
-    for res in from..to {
-        generate_png(julia, res);
+    let num_frames = 100;
+    for frame in 0..num_frames {
+        let factor = frame as f32 / num_frames as f32;
+        let factor_inv = 1.0 - factor;
+        let julia = Julia {
+            r: 2.0,
+            cx: factor * -0.795 + factor_inv * -0.805,
+            cy: 0.156,
+            max_iteration: 256,
+        };
+        generate_pngs(&julia, frame + 1, 2);
     }
 }
 
-fn generate_png(julia: &Julia, resolution: u32) {
-    let file_name = format!("julia_{}k.png", resolution);
+fn generate_pngs(julia: &Julia, frame: u32, resolution: u32) {
+    generate_png(julia, frame, resolution);
+}
+
+fn generate_png(julia: &Julia, frame: u32, resolution: u32) {
+    let file_name = format!("animation_{:04}.png", frame);
     println!("Generating {}", file_name);
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);

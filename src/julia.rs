@@ -219,7 +219,7 @@ impl JuliaRow for AsmX86 {
         }
         let buffer = row_buffer.as_mut_ptr();
         let factor = row as f32 / height as f32;
-        let min = -0.5;
+        let min = -2.0;
         let max = -min;
         let zy = factor * max + (1.0 - factor) * min;
         unsafe {
