@@ -1,3 +1,5 @@
 /target
 *.exr
 *.png
+*.blend
+*.mp4

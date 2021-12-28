@@ -11,7 +11,7 @@ use std::io::BufWriter;
 use std::path::Path;
 
 fn main() {
-    let num_frames = 100;
+    let num_frames = 1024;
     for frame in 0..num_frames {
         let factor = frame as f32 / num_frames as f32;
         let factor_inv = 1.0 - factor;

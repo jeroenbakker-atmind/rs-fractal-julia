@@ -18,11 +18,11 @@ fn main() {
         max_iteration: 256,
     };
 
-    generate_pngs(&julia, 1, 3);
+    generate_pngs(&julia, 1, 4);
 }
 
 fn generate_pngs(julia: &Julia, from: u32, to: u32) {
-    for res in from..to {
+    for res in from..=to {
         generate_png(julia, res);
     }
 }
