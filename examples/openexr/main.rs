@@ -1,11 +1,11 @@
 extern crate fractal_julia;
 extern crate openexr;
 
+use fractal_julia::julia::AsmX86;
 use openexr::prelude::*;
 
 use fractal_julia::buffer::BufferTrait;
 use fractal_julia::buffer::RGBABuffer;
-use fractal_julia::julia::CPUBackend;
 use fractal_julia::julia::Julia;
 use fractal_julia::julia::JuliaRow;
 
@@ -17,11 +17,11 @@ fn main() {
         max_iteration: 256,
     };
 
-    generate_openexrs(&julia, 1, 9);
+    generate_openexrs(&julia, 1, 32);
 }
 
 fn generate_openexrs(julia: &Julia, from: u32, to: u32) {
-    for res in from..to {
+    for res in from..=to {
         generate_openexr_per_row(julia, res);
     }
 }
@@ -38,7 +38,7 @@ fn generate_openexr_per_row(julia: &Julia, resolution: u32) {
     let r2 = julia.r * julia.r;
 
     let height = buffer.get_height();
-    let backend = CPUBackend::<f32>::default();
+    let backend = AsmX86::<f64>::default();
     let mut row_buffer = Vec::with_capacity(res);
 
     let header = Header::from_dimensions(res as i32, res as i32);

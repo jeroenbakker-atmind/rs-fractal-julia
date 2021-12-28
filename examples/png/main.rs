@@ -13,7 +13,7 @@ use std::path::Path;
 fn main() {
     let julia = Julia {
         r: 2.0,
-        cx: -0.7,
+        cx: -0.8,
         cy: 0.156,
         max_iteration: 256,
     };
@@ -33,7 +33,7 @@ fn generate_png(julia: &Julia, resolution: u32) {
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);
     println!(" - generate fractal");
-    julia.generate::<AsmX86>(&mut buffer);
+    julia.generate::<AsmX86<f32>>(&mut buffer);
     println!(" - write image");
     write_png(&file_name, buffer);
 }
