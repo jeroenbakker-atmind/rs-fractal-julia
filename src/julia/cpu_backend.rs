@@ -1,6 +1,9 @@
-use std::{marker::PhantomData, ops::{Div, Mul, Add, Sub}};
+use std::{
+    marker::PhantomData,
+    ops::{Add, Div, Mul, Sub},
+};
 
-use super::{JuliaRow, Julia};
+use super::{Julia, JuliaRow};
 
 pub struct CPUBackend<T> {
     phantom: PhantomData<T>,
@@ -27,14 +30,14 @@ where
     fn julia_row(
         &self,
         julia: &Julia,
-        row_buffer: &mut Vec<usize>,
+        row_buffer: &mut Vec<u32>,
         width: usize,
         height: usize,
         row: u32,
         r2: f32,
     ) {
         let r2 = T::from(r2);
-        let max_iteration = julia.max_iteration;
+        let max_iteration = julia.max_iteration as u32;
 
         let two = T::from(2.0);
         let cx = T::from(julia.cx);
@@ -60,4 +63,3 @@ where
         }
     }
 }
-

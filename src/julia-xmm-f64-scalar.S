@@ -66,7 +66,7 @@ _julia_store_and_return:
     #mov rax, [rsi+input_iteration]
     mov [rdi], rax
 
-    add rdi, 8
+    add rdi, 4
 
     # add delta per sample to zx
     addsd xmm9, xmm8

@@ -25,7 +25,6 @@ impl Julia {
 
         for y in 0..height {
             backend.julia_row_and_store(self, buffer, y, r2);
-            print!("{}/{}\r", y, height);
         }
     }
 }
@@ -34,7 +33,7 @@ pub trait JuliaRow: Default {
     fn julia_row(
         &self,
         julia: &Julia,
-        row_buffer: &mut Vec<usize>,
+        row_buffer: &mut Vec<u32>,
         width: usize,
         height: usize,
         row: u32,
@@ -51,19 +50,13 @@ pub trait JuliaRow: Default {
         self.store(julia, buffer, row, &row_buffer);
     }
 
-    fn store(
-        &self,
-        julia: &Julia,
-        buffer: &mut dyn BufferTrait,
-        row: u32,
-        row_buffer: &Vec<usize>,
-    ) {
+    fn store(&self, julia: &Julia, buffer: &mut dyn BufferTrait, row: u32, row_buffer: &Vec<u32>) {
         let width = buffer.get_width() as usize;
         let mut offset = width * row as usize;
         for sample_offset in 0..width {
             self.store_pixel(
                 row_buffer[sample_offset],
-                julia.max_iteration,
+                julia.max_iteration as u32,
                 buffer,
                 offset,
             );
@@ -73,8 +66,8 @@ pub trait JuliaRow: Default {
 
     fn store_pixel(
         &self,
-        iteration: usize,
-        max_iteration: usize,
+        iteration: u32,
+        max_iteration: u32,
         buffer: &mut dyn BufferTrait,
         offset: usize,
     ) {
@@ -91,13 +84,13 @@ impl JuliaRow for f32 {
     fn julia_row(
         &self,
         julia: &Julia,
-        row_buffer: &mut Vec<usize>,
+        row_buffer: &mut Vec<u32>,
         width: usize,
         height: usize,
         row: u32,
         r2: f32,
     ) {
-        let max_iteration = julia.max_iteration;
+        let max_iteration = julia.max_iteration as u32;
 
         let t_width = width as f32;
         let t_half_width = t_width * 0.5;
@@ -126,14 +119,14 @@ impl JuliaRow for f64 {
     fn julia_row(
         &self,
         julia: &Julia,
-        row_buffer: &mut Vec<usize>,
+        row_buffer: &mut Vec<u32>,
         width: usize,
         height: usize,
         row: u32,
         r2: f32,
     ) {
         let r2 = r2 as f64;
-        let max_iteration = julia.max_iteration;
+        let max_iteration = julia.max_iteration as u32;
 
         let t_width = width as f64;
         let t_half_width = t_width * 0.5;

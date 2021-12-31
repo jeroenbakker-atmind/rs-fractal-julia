@@ -15,8 +15,8 @@ name="png"
 name="openexr"
 
 [dependencies]
-openexr = "*"
-half = "*"
+#half = "*"
+#openexr = "*"
 
 [dev-dependencies]
 png = "*"

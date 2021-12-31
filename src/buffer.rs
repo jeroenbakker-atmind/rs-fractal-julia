@@ -1,6 +1,3 @@
-use half::f16;
-use openexr::prelude::Rgba;
-
 pub struct RGBABuffer<T> {
     pub data: Vec<T>,
     pub width: u32,
@@ -54,6 +51,9 @@ impl BufferTrait for RGBABuffer<u8> {
     }
 }
 
+/*
+#[test)]
+
 impl BufferTrait for RGBABuffer<Rgba> {
     fn new(width: u32, height: u32) -> RGBABuffer<Rgba> {
         let capacity: usize = (width * height) as usize;
@@ -94,3 +94,4 @@ impl BufferTrait for RGBABuffer<Rgba> {
         self.data[offset] = rgba;
     }
 }
+*/
