@@ -1,7 +1,7 @@
-mod asmxmm_backend;
+mod asm_backend;
 mod cpu_backend;
 
-pub use asmxmm_backend::*;
+pub use asm_backend::*;
 pub use cpu_backend::*;
 
 use crate::buffer::BufferTrait;
