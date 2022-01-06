@@ -22,5 +22,3 @@ test benchmark::bench_native_f64         ... bench:  26,652,314 ns/iter (+/- 1,1
 Remarkably double precision is slower in rust. This could be to bad vectorization. Still need to have a look at the generated assembly.
 
 Modern CPU only can calculate doubles, and use bit sizzling to support floats. Hence the small difference when between the scalar implementations.
-
-When vectorizing the performance for doubles should be less as half of the data can be kept in the registers.
