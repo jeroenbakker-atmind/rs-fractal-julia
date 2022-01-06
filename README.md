@@ -9,13 +9,14 @@ Rust is used to export the data to an image, compare performance and correctness
 
 Results running on an Intel(R) Core(TM) i7-8550U CPU
 ```
-test benchmark::bench_asm_xmm_f32_packed ... bench:   8,030,902 ns/iter (+/- 726,648)
-test benchmark::bench_asm_xmm_f32_scalar ... bench:  22,494,697 ns/iter (+/- 2,721,733)
-test benchmark::bench_asm_xmm_f64_scalar ... bench:  21,933,574 ns/iter (+/- 1,151,042)
-test benchmark::bench_cpu_f32            ... bench:  22,567,612 ns/iter (+/- 1,095,805)
-test benchmark::bench_cpu_f64            ... bench:  26,711,851 ns/iter (+/- 1,218,051)
-test benchmark::bench_native_f32         ... bench:  22,272,041 ns/iter (+/- 746,111)
-test benchmark::bench_native_f64         ... bench:  26,861,162 ns/iter (+/- 7,074,162)
+test benchmark::bench_asm_xmm_f32_packed ... bench:   7,879,546 ns/iter (+/- 461,113)
+test benchmark::bench_asm_xmm_f32_scalar ... bench:  22,110,853 ns/iter (+/- 1,130,467)
+test benchmark::bench_asm_xmm_f64_packed ... bench:  12,915,632 ns/iter (+/- 802,999)
+test benchmark::bench_asm_xmm_f64_scalar ... bench:  21,998,341 ns/iter (+/- 1,136,655)
+test benchmark::bench_cpu_f32            ... bench:  22,412,409 ns/iter (+/- 1,269,286)
+test benchmark::bench_cpu_f64            ... bench:  26,766,961 ns/iter (+/- 1,191,797)
+test benchmark::bench_native_f32         ... bench:  22,627,857 ns/iter (+/- 1,945,357)
+test benchmark::bench_native_f64         ... bench:  26,652,314 ns/iter (+/- 1,137,777)
 ```
 
 Remarkably double precision is slower in rust. This could be to bad vectorization. Still need to have a look at the generated assembly.
