@@ -104,3 +104,16 @@ fn bench_asm_xmm_f64_scalar(bench: &mut Bencher) {
         julia.generate::<AsmXMMScalar<f64>>(&mut buffer);
     })
 }
+#[bench]
+fn bench_asm_xmm_f64_packed(bench: &mut Bencher) {
+    let julia = Julia {
+        cx: -0.8,
+        cy: 0.156,
+        r: 2.0,
+        max_iteration: 256,
+    };
+    let mut buffer = RGBABuffer::<u8>::new(BENCHMARK_RESOLUTION, BENCHMARK_RESOLUTION);
+    bench.iter(|| {
+        julia.generate::<AsmXMMPacked<f64>>(&mut buffer);
+    })
+}

@@ -11,6 +11,7 @@ extern "C" {
     fn julia_sample_xmm_f32_packed(dest: *mut u32, parameters: &AsmX86Input<f32>);
     fn julia_sample_xmm_f32_scalar(dest: *mut u32, parameters: &AsmX86Input<f32>);
     fn julia_sample_xmm_f64_scalar(dest: *mut u32, parameters: &AsmX86Input<f64>);
+    fn julia_sample_xmm_f64_packed(dest: *mut u32, parameters: &AsmX86Input<f64>);
 }
 
 #[cfg(test)]

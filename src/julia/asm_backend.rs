@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-    julia_sample_xmm_f32_packed, julia_sample_xmm_f32_scalar, julia_sample_xmm_f64_scalar,
+    julia_sample_xmm_f32_packed, julia_sample_xmm_f32_scalar, julia_sample_xmm_f64_packed,
+    julia_sample_xmm_f64_scalar,
 };
 
 use super::{Julia, JuliaRow};
@@ -143,6 +144,42 @@ impl JuliaRow for AsmXMMScalar<f64> {
                 ..AsmX86Input::<f64>::default()
             };
             julia_sample_xmm_f64_scalar(buffer, &parameters);
+        }
+    }
+}
+
+impl JuliaRow for AsmXMMPacked<f64> {
+    fn julia_row(
+        &self,
+        julia: &Julia,
+        row_buffer: &mut Vec<u32>,
+        width: usize,
+        height: usize,
+        row: u32,
+        r2: f32,
+    ) {
+        row_buffer.reserve_exact(width);
+        unsafe {
+            row_buffer.set_len(width);
+        }
+        let buffer = row_buffer.as_mut_ptr();
+        let factor = row as f64 / height as f64;
+        let min = -0.5;
+        let max = -min;
+        let zy = factor * max + (1.0 - factor) * min;
+        unsafe {
+            let parameters = AsmX86Input::<f64> {
+                zy: zy,
+                r2: r2 as f64,
+                cx: julia.cx as f64,
+                cy: julia.cy as f64,
+                max_iteration: julia.max_iteration as u32,
+                zx_min: min,
+                zx_max: max,
+                width: width,
+                ..AsmX86Input::<f64>::default()
+            };
+            julia_sample_xmm_f64_packed(buffer, &parameters);
         }
     }
 }
