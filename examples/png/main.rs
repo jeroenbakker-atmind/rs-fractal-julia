@@ -33,7 +33,7 @@ fn generate_png(julia: &Julia, resolution: u32) {
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);
     println!(" - generate fractal");
-    julia.generate::<AsmYMMPacked<f32>>(&mut buffer);
+    julia.generate::<AsmYMMPacked<f64>>(&mut buffer);
     println!(" - write image");
     write_png(&file_name, buffer);
 }

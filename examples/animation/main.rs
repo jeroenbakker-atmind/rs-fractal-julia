@@ -3,7 +3,7 @@ extern crate png;
 
 use fractal_julia::buffer::BufferTrait;
 use fractal_julia::buffer::RGBABuffer;
-use fractal_julia::julia::AsmXMMScalar;
+use fractal_julia::julia::AsmYMMPacked;
 use fractal_julia::julia::Julia;
 
 use std::fs::File;
@@ -35,7 +35,7 @@ fn generate_png(julia: &Julia, frame: u32, resolution: u32) {
     println!(" - allocate buffer");
     let mut buffer = RGBABuffer::<u8>::new(resolution * 1024, resolution * 1024);
     println!(" - generate fractal");
-    julia.generate::<AsmXMMScalar<f64>>(&mut buffer);
+    julia.generate::<AsmYMMPacked<f64>>(&mut buffer);
     println!(" - write image");
     write_png(&file_name, buffer);
 }
