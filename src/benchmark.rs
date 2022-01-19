@@ -2,7 +2,7 @@ use test::Bencher;
 
 use crate::{
     buffer::{BufferTrait, RGBABuffer},
-    julia::{AsmXMMPacked, AsmXMMScalar, CPUBackend, Julia},
+    julia::{AsmXMMPacked, AsmXMMScalar, AsmYMMPacked, CPUBackend, Julia},
 };
 
 const BENCHMARK_RESOLUTION: u32 = 256;
@@ -88,6 +88,20 @@ fn bench_asm_xmm_f32_packed(bench: &mut Bencher) {
     let mut buffer = RGBABuffer::<u8>::new(BENCHMARK_RESOLUTION, BENCHMARK_RESOLUTION);
     bench.iter(|| {
         julia.generate::<AsmXMMPacked<f32>>(&mut buffer);
+    })
+}
+
+#[bench]
+fn bench_asm_ymm_f32_packed(bench: &mut Bencher) {
+    let julia = Julia {
+        cx: -0.8,
+        cy: 0.156,
+        r: 2.0,
+        max_iteration: 256,
+    };
+    let mut buffer = RGBABuffer::<u8>::new(BENCHMARK_RESOLUTION, BENCHMARK_RESOLUTION);
+    bench.iter(|| {
+        julia.generate::<AsmYMMPacked<f32>>(&mut buffer);
     })
 }
 
