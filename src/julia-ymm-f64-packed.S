@@ -111,7 +111,7 @@ _julia_next_iteration:
 
     inc eax
     movq [rsi+input_scratch0], rax
-    movq ymm7, [rsi+input_scratch0]
+    movq xmm7, [rsi+input_scratch0]
     # This is a packed double move, but we wanted an quad word move.
     vbroadcastsd ymm7, xmm7
     vblendvpd ymm10, ymm10, ymm7, ymm11
