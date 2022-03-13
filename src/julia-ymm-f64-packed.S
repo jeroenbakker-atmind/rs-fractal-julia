@@ -16,18 +16,18 @@
 .globl julia_sample_ymm_f64_packed
 
 # Register usage:
-# xmm0 is the zx value
-# xmm1 is the zy value
-# xmm2 contains the r2 value.
-# xmm3 contains the cy
-# xmm4 contains the cx
+# ymm0 is the zx value
+# ymm1 is the zy value
+# ymm2 contains the r2 value.
+# ymm3 contains the cy
+# ymm4 contains the cx
 
 # inner loop (per iteration)
-# xmm5 = zx * zx
-# xmm6 = zy * zy
-# xmm7 = temp value for calculations.
-# xmm8 is the adder for zx
-# xmm9 contains the init value for cx.
+# ymm5 = zx * zx
+# ymm6 = zy * zy
+# ymm7 = temp value for calculations.
+# ymm8 is the adder for zx
+# ymm9 contains the init value for cx.
 
 
 julia_sample_ymm_f64_packed:
@@ -44,7 +44,7 @@ julia_sample_ymm_f64_packed:
     # so it is divided by 4.
     shr ecx, 2
 
-    # xmm9 = zx
+    # ymm9 = zx
     movsd xmm9, [rsi+input_zx_min]
     movsd [rsi+input_scratch0], xmm9
     addsd xmm9, xmm8
@@ -55,7 +55,7 @@ julia_sample_ymm_f64_packed:
     movsd [rsi+input_scratch3], xmm9
     vmovupd ymm9, [rsi+input_scratch]
 
-    # xmm8 is the adder for the xmm9 xmm8 is multiplied by 4 as 4 samples are calculated at the same time.
+    # ymm8 is the adder for the ymm9 ymm8 is multiplied by 4 as 4 samples are calculated at the same time.
     addsd xmm8, xmm8
     addsd xmm8, xmm8
     vbroadcastsd ymm8, xmm8
@@ -82,12 +82,12 @@ _julia_next_sample:
     # use this mask for the main instructions. update the k0 mask with the r2 check.
 
 _julia_next_iteration:
-    # xmm5 = zx * zx
+    # ymm5 = zx * zx
     vmulpd ymm5, ymm0, ymm0
-    # xmm6 = zy * zy
+    # ymm6 = zy * zy
     vmulpd ymm6, ymm1, ymm1
 
-    # xmm7 = (zx * zx) + (zy * zy)
+    # ymm7 = (zx * zx) + (zy * zy)
     vaddpd ymm7, ymm5, ymm6
     # exit when larger or equal to r2
     vcmpltpd ymm11, ymm7, ymm2
@@ -99,19 +99,19 @@ _julia_next_iteration:
     cmp eax, edx
     jnl _julia_store_and_return
 
-    # xmm7 = (zx*zx) - (zy*zy)
+    # ymm7 = (zx*zx) - (zy*zy)
     vsubpd ymm7, ymm5, ymm6
     # zx = 2 * zx * zy + cy
     vaddpd ymm1, ymm1, ymm1
     vmulpd ymm1, ymm1, ymm0
     vaddpd ymm1, ymm1, ymm3
 
-    # zx = xmm7 + cx
+    # zx = ymm7 + cx
     vaddpd ymm0, ymm7, ymm4
 
     inc eax
     movq [rsi+input_scratch0], rax
-    movq xmm7, [rsi+input_scratch0]
+    movq ymm7, [rsi+input_scratch0]
     # This is a packed double move, but we wanted an quad word move.
     vbroadcastsd ymm7, xmm7
     vblendvpd ymm10, ymm10, ymm7, ymm11
@@ -127,7 +127,6 @@ _julia_store_and_return:
     mov [rdi+8], eax
     movq rax, [rsi+input_scratch3]
     mov [rdi+12], eax
-
 
     add rdi, 4 * 4
 

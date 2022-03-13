@@ -1,12 +1,11 @@
 Julia fractal generator for rust.
 
-Fractal generation that (eventually) should support huge image sizes. Done as it is hard to find
-free images with huge resolution.
+Project started when adding huge image support in blender image engine. During development it
+wasn't easy to generate/download huge images that were also interesting to show.
 
-The second goal of the project is an exercise at writing vectorization code (AVX1/AVX2) in assembly. Therefore the solution doesn't support parallelization across multiple CPU cores.
-The code has room for improvements (performance wise) as the goal was to keep the code readable.
-
-Rust is used to export the data to an image, compare performance and correctness.
+A second goal of the project is to exercise at writing vectorization code (AVX1/AVX2) in assembly.
+Rust is mostly used for IO and outer loops. There are some rust native kernels for time
+comparison.
 
 Results running on an Intel(R) Core(TM) i7-8550U CPU (Slowest on top).
 
@@ -23,9 +22,23 @@ test benchmark::bench_asm_xmm_f32_packed ... bench:   7,837,280 ns/iter (+/- 429
 test benchmark::bench_asm_ymm_f32_packed ... bench:   4,821,649 ns/iter (+/- 338,150)
 ```
 
-Remarkably double precision is slower in rust. This could be to bad vectorization. Still need to have a look at the generated assembly.
+Remarkably double precision is slower in rust. This could be to bad vectorization. Still need to
+have a look at the generated assembly. Modern CPU only calculate in f64 precision. To support f32 it uses
+bit sizzling inside the CPU.
 
-Modern CPU only can calculate doubles, and use bit sizzling to support floats. Hence the small difference when between the scalar implementations.
+The best kernel (performance vs precision) is julia_ymm_f64_packed. The kernel only support
+calculating a multiple of the scalar packing number of items.
+
+```
+xmm_f32 = 4
+xmm_f64 = 2
+ymm_f32 = 8
+ymm_f64 = 4
+```
+
+The kernels are optimized for readability. The kernels can still be improved performance wise.
 
 Note: That this has been developed on a Linux OS and  hasn't been tested on other OS's.
-Note: Will only compile and run on AVX2 X86 processors.
+Other OS's and linkers require different stack management.
+Note: Will only compile and run on AVX2 X86 processors. There isn't any check if your
+CPU is supported.

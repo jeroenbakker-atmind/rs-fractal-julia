@@ -20,18 +20,18 @@
 .globl julia_sample_ymm_f32_packed
 
 # Register usage:
-# xmm0 is the zx value
-# xmm1 is the zy value
-# xmm2 contains the r2 value.
-# xmm3 contains the cy
-# xmm4 contains the cx
+# ymm0 is the zx value
+# ymm1 is the zy value
+# ymm2 contains the r2 value.
+# ymm3 contains the cy
+# ymm4 contains the cx
 
 # inner loop (per iteration)
-# xmm5 = zx * zx
-# xmm6 = zy * zy
-# xmm7 = temp value for calculations.
-# xmm8 is the adder for zx
-# xmm9 contains the init value for cx.
+# ymm5 = zx * zx
+# ymm6 = zy * zy
+# ymm7 = temp value for calculations.
+# ymm8 is the adder for zx
+# ymm9 contains the init value for cx.
 
 
 julia_sample_ymm_f32_packed:
@@ -49,7 +49,7 @@ julia_sample_ymm_f32_packed:
     shr ecx, 3
 
 
-    # xmm9 = zx
+    # ymm9 = zx
     movss xmm9, [rsi+input_zx_min]
     movss [rsi+input_scratch0], xmm9
     addss xmm9, xmm8
@@ -68,7 +68,7 @@ julia_sample_ymm_f32_packed:
     movss [rsi+input_scratch7], xmm9
     vmovups ymm9, [rsi+input_scratch]
 
-    # xmm8 is the adder for the ymm9 xmm8 is multiplied by 8 as 8 samples are calculated at the same time.
+    # ymm8 is the adder for the ymm9 xmm8 is multiplied by 8 as 8 samples are calculated at the same time.
     addss xmm8, xmm8
     addss xmm8, xmm8
     addss xmm8, xmm8
@@ -97,12 +97,12 @@ _julia_next_sample:
     # use this mask for the main instructions. update the k0 mask with the r2 check.
 
 _julia_next_iteration:
-    # xmm5 = zx * zx
+    # ymm5 = zx * zx
     vmulps ymm5, ymm0, ymm0
-    # xmm6 = zy * zy
+    # ymm6 = zy * zy
     vmulps ymm6, ymm1, ymm1
 
-    # xmm7 = (zx * zx) + (zy * zy)
+    # ymm7 = (zx * zx) + (zy * zy)
     vaddps ymm7, ymm5, ymm6
     # exit when larger or equal to r2
     vcmpltps ymm11, ymm7, ymm2
@@ -114,7 +114,7 @@ _julia_next_iteration:
     cmp eax, edx
     jnl _julia_store_and_return
 
-    # xmm7 = (zx*zx) - (zy*zy)
+    # ymm7 = (zx*zx) - (zy*zy)
     vsubps ymm7, ymm5, ymm6
     # zx = 2 * zx * zy + cy
     vaddps ymm1, ymm1, ymm1
